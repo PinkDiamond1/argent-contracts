@@ -293,7 +293,7 @@ describe("RecoveryManager", function () {
             assert.equal(walletOwner, owner.address, 'owner should not have been changed.');
 
             await manager.increaseTime(48); // 42 == 2 * security_period
-            await assert.revert(recoveryManager.finalizeOwnershipTransfer(wallet.contractAddress), "confirming the ownership transfer should throw");
+            await assert.revertWith(recoveryManager.finalizeOwnershipTransfer(wallet.contractAddress), "RM: Too late to confirm ownership transfer");
 
             walletOwner = await wallet.owner();
             assert.equal(walletOwner, owner.address, 'owner should not have been changed.');
@@ -305,7 +305,7 @@ describe("RecoveryManager", function () {
             assert.equal(walletOwner, owner.address, 'owner should not have been changed.');
 
             await manager.increaseTime(48); // 42 == 2 * security_period
-            await assert.revert(recoveryManager.finalizeOwnershipTransfer(wallet.contractAddress), "confirming the ownership transfer should throw");
+            await assert.revertWith(recoveryManager.finalizeOwnershipTransfer(wallet.contractAddress), "RM: Too late to confirm ownership transfer");
 
             // second time
             await recoveryManager.from(owner).executeOwnershipTransfer(wallet.contractAddress, newowner.address);
@@ -319,7 +319,7 @@ describe("RecoveryManager", function () {
         });
 
         it("should only let the owner execute an ownership transfer (blockchain transaction)", async () => {
-            await assert.revert(recoveryManager.from(nonowner).executeOwnershipTransfer(wallet.contractAddress, newowner.address), "transferring ownership from nonowner should throw");
+            await assert.revertWith(recoveryManager.from(nonowner).executeOwnershipTransfer(wallet.contractAddress, newowner.address), "BM: must be an owner for the wallet");
         });
 
         it("should let the owner execute and finalize an ownership transfer (relayed transaction)", async () => {
@@ -336,14 +336,14 @@ describe("RecoveryManager", function () {
             await recoveryManager.from(owner).executeOwnershipTransfer(wallet.contractAddress, newowner.address);
             await recoveryManager.from(owner).cancelOwnershipTransfer(wallet.contractAddress);
             await manager.increaseTime(30);
-            await assert.revert(recoveryManager.finalizeOwnershipTransfer(wallet.contractAddress), "finalizeOwnershipTransfer should throw");
+            await assert.revert(recoveryManager.finalizeOwnershipTransfer(wallet.contractAddress), "RM: there must be an ongoing ownership transfer");
         });
 
         it("owner should be able to cancel pending ownership transfer (relayed transaction)", async () => {
             await manager.relay(recoveryManager, 'executeOwnershipTransfer', [wallet.contractAddress, newowner.address], wallet, [owner]);
             await manager.relay(recoveryManager, 'cancelOwnershipTransfer', [wallet.contractAddress], wallet, [owner]);
             await manager.increaseTime(30);
-            await assert.revert(recoveryManager.finalizeOwnershipTransfer(wallet.contractAddress), "finalizeOwnershipTransfer should throw");
+            await assert.revert(recoveryManager.finalizeOwnershipTransfer(wallet.contractAddress), "RM: there must be an ongoing ownership transfer");
         });
     });
 
