@@ -8,7 +8,7 @@ const Registry = require("../build/ModuleRegistry");
 const TestManager = require("../utils/test-manager");
 const { sortWalletByAddress, parseRelayReceipt, signOffchain } = require("../utils/utilities.js");
 
-describe("RecoveryManager", function () {
+describe.only("RecoveryManager", function () {
     this.timeout(10000);
 
     const manager = new TestManager(accounts);
@@ -66,8 +66,8 @@ describe("RecoveryManager", function () {
     }
 
     function testExecuteRecovery(guardians) {
-        it("should let a majority of guardians execute the recovery procedure (relayed transaction)", async () => {
-            let majority = guardians.slice(0, Math.ceil((guardians.length + 1) / 2));
+        it("should let a majority of guardians execute the recovery procedure", async () => {
+            let majority = guardians.slice(0, Math.ceil((guardians.length) / 2));
             await manager.relay(recoveryManager, 'executeRecovery', [wallet.contractAddress, newowner.address], wallet, sortWalletByAddress(majority));
             let currentBlock = await manager.getCurrentBlock();
             let timestamp = await manager.getTimestamp(currentBlock);
@@ -80,8 +80,8 @@ describe("RecoveryManager", function () {
             assert.equal(recoveryConfig._guardianCount, guardians.length);
         });
 
-        it("should not let a minority of guardians execute the recovery procedure (relayed transaction)", async () => {
-            let minority = guardians.slice(0, Math.ceil((guardians.length + 1) / 2) - 1);
+        it("should not let a minority of guardians execute the recovery procedure", async () => {
+            let minority = guardians.slice(0, Math.ceil((guardians.length) / 2) - 1);
             let txReceipt = await manager.relay(recoveryManager, 'executeRecovery', [wallet.contractAddress, newowner.address], wallet, sortWalletByAddress(minority));
             const success = parseRelayReceipt(txReceipt);
             assert.isNotOk(success, "executeRecovery should fail");
@@ -91,7 +91,7 @@ describe("RecoveryManager", function () {
     }
 
     function testFinalizeRecovery() {
-        it("should let anyone finalize the recovery procedure after the recovery period (relayed transaction)", async () => {
+        it("should let anyone finalize the recovery procedure after the recovery period", async () => {
             await manager.increaseTime(40); // moving time to after the end of the recovery period
             await manager.relay(recoveryManager, 'finalizeRecovery', [wallet.contractAddress], wallet, []);
             const isLocked = await lockManager.isLocked(wallet.contractAddress);
@@ -105,7 +105,7 @@ describe("RecoveryManager", function () {
             assert.equal(recoveryConfig._guardianCount, 0);
         });
 
-        it("should not let anyone finalize the recovery procedure before the end of the recovery period (relayed transaction)", async () => {
+        it("should not let anyone finalize the recovery procedure before the end of the recovery period", async () => {
             const txReceipt = await manager.relay(recoveryManager, 'finalizeRecovery', [wallet.contractAddress], wallet, []);
             const success = parseRelayReceipt(txReceipt);
             assert.isNotOk(success, 'finalization should have failed')
@@ -116,7 +116,7 @@ describe("RecoveryManager", function () {
     }
 
     function testCancelRecovery() {
-        it("should let 2 guardians cancel the recovery procedure (relayed transaction)", async () => {
+        it("should let 2 guardians cancel the recovery procedure", async () => {
             await manager.relay(recoveryManager, 'cancelRecovery', [wallet.contractAddress], wallet, sortWalletByAddress([guardian1, guardian2]));
             const isLocked = await lockManager.isLocked(wallet.contractAddress);
             assert.isFalse(isLocked, "should no longer be locked by recovery");
@@ -133,7 +133,7 @@ describe("RecoveryManager", function () {
             assert.equal(recoveryConfig._guardianCount, 0);
         });
 
-        it("should let 1 guardian + owner cancel the recovery procedure (relayed transaction)", async () => {
+        it("should let 1 guardian + owner cancel the recovery procedure", async () => {
             await manager.relay(recoveryManager, 'cancelRecovery', [wallet.contractAddress], wallet, [owner, guardian1]);
             const isLocked = await lockManager.isLocked(wallet.contractAddress);
             assert.isFalse(isLocked, "should no longer be locked by recovery");
@@ -145,7 +145,7 @@ describe("RecoveryManager", function () {
             assert.equal(walletOwner, owner.address, "wallet owner should not have been changed");
         });
 
-        it("should not let 1 guardian cancel the recovery procedure (relayed transaction)", async () => {
+        it("should not let 1 guardian cancel the recovery procedure", async () => {
             let txReceipt = await manager.relay(recoveryManager, 'cancelRecovery', [wallet.contractAddress], wallet, [guardian1]);
             const success = parseRelayReceipt(txReceipt);
             assert.isNotOk(success, "cancelRecovery should fail");
@@ -153,7 +153,7 @@ describe("RecoveryManager", function () {
             assert.isTrue(isLocked, "should still be locked");
         });
 
-        it("should not let the owner cancel the recovery procedure (relayed transaction)", async () => {
+        it("should not let the owner cancel the recovery procedure", async () => {
             let txReceipt = await manager.relay(recoveryManager, 'cancelRecovery', [wallet.contractAddress], wallet, [owner]);
             const success = parseRelayReceipt(txReceipt);
             assert.isNotOk(success, "cancelRecovery should fail");
