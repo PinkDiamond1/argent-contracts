@@ -32,6 +32,8 @@ utils/config/*.json
 ## Etherlime
 **/.etherlime-store
 flat
-
-
-
+.coverage_artifacts
+.coverage_contracts
+.coverage_tests
+coverage
+coverage.json
