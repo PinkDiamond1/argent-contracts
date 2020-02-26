@@ -25,7 +25,6 @@ bin
 .outputParameter
 
 .env
-*.sh
 utils/config/*.json
 !utils/config/ganache.json
 
